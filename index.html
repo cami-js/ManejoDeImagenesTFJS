@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TensorFlow.js Image Processing</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+</head>
+<body>
+    <h1>Manipulación de Imágenes con TensorFlow.js</h1>
+    <img id="miImagen" src="Dalmatien.jpg" alt="Original Image" onload="procesarImagen()" />
+
+    <h2>Recortada y Redimensionada</h2>
+    <canvas id="canvasRecortada"></canvas>
+
+    <h2>Redimensionada (Interpolación Bilineal)</h2>
+    <canvas id="canvasBilinear"></canvas>
+
+    <h2>Redimensionada (Vecino Más Cercano)</h2>
+    <canvas id="canvasVecino"></canvas>
+
+    <h2>Espejada Horizontalmente</h2>
+    <canvas id="canvasEspejada"></canvas>
+
+    <script>
+        async function procesarImagen() {
+            const imgElement = document.getElementById('miImagen');
+
+            // Convierte la imagen en un tensor y normaliza los valores a [0, 1]
+            const tensorImagen = tf.browser.fromPixels(imgElement).toFloat().div(tf.scalar(255));
+
+            // Define las coordenadas y el tamaño del recorte
+            const start = [50, 50, 0]; // Coordenadas de inicio [y, x, canal]
+            const size = [200, 200, 3]; // Tamaño del recorte [alto, ancho, canales]
+
+            // Realiza el recorte
+            const tensorRecortado = tf.slice(tensorImagen, start, size);
+
+            // Muestra la imagen recortada en el canvas correspondiente
+            const canvasRecortada = document.getElementById('canvasRecortada');
+            canvasRecortada.width = size[1];
+            canvasRecortada.height = size[0];
+            await tf.browser.toPixels(tensorRecortado.mul(tf.scalar(255)).cast('int32'), canvasRecortada);
+
+            // Define el nuevo tamaño para redimensionar la imagen
+            const nuevoTamaño = [150, 150];
+
+            // Redimensiona la imagen usando interpolación bilineal
+            const tensorRedimensionadoBilinear = tf.image.resizeBilinear(tensorRecortado, nuevoTamaño);
+            const canvasBilinear = document.getElementById('canvasBilinear');
+            canvasBilinear.width = nuevoTamaño[0];
+            canvasBilinear.height = nuevoTamaño[1];
+            await tf.browser.toPixels(tensorRedimensionadoBilinear.mul(tf.scalar(255)).cast('int32'), canvasBilinear);
+
+            // Redimensiona la imagen usando el método de vecino más cercano
+            const tensorRedimensionadoVecino = tf.image.resizeNearestNeighbor(tensorRecortado, nuevoTamaño);
+            const canvasVecino = document.getElementById('canvasVecino');
+            canvasVecino.width = nuevoTamaño[0];
+            canvasVecino.height = nuevoTamaño[1];
+            await tf.browser.toPixels(tensorRedimensionadoVecino.mul(tf.scalar(255)).cast('int32'), canvasVecino);
+
+            // Voltea la imagen horizontalmente (efecto espejo)
+            const tensorEspejado = tf.image.flipLeftRight(tensorRedimensionadoBilinear.expandDims()).squeeze();
+            const canvasEspejada = document.getElementById('canvasEspejada');
+            canvasEspejada.width = nuevoTamaño[0];
+            canvasEspejada.height = nuevoTamaño[1];
+            await tf.browser.toPixels(tensorEspejado.mul(tf.scalar(255)).cast('int32'), canvasEspejada);
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
